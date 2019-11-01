@@ -1,0 +1,207 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <section class="content-header">
+        <h1>
+            Dashboard
+            <small>Control panel</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li class="active">Dashboard</li>
+        </ol>
+    </section>
+
+    <section class="content">
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-aqua">
+                    <div class="inner">
+                        <h3>150</h3>
+
+                        <p>New Orders</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-bag"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-green">
+                    <div class="inner">
+                        <h3>53<sup style="font-size: 20px">%</sup></h3>
+
+                        <p>Bounce Rate</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-stats-bars"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-yellow">
+                    <div class="inner">
+                        <h3>44</h3>
+
+                        <p>User Registrations</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-person-add"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-red">
+                    <div class="inner">
+                        <h3>65</h3>
+
+                        <p>Unique Visitors</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-pie-graph"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <!-- ./col -->
+        </div>
+        <!-- /.row -->
+        <!-- Main row -->
+        
+        <div class="row">
+            <div class="col-lg-5">
+               <div class="chart-container">
+                <input type="text" name="daterange" />
+               </div>
+            </div>
+        </div>
+        <!-- /.row (main row) -->
+
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+
+    <script>
+        $(function(){
+            $('input[name="daterange"]').daterangepicker();
+           
+            function dynamicCharts()
+            {
+                var startDate = $('input[name="daterange"]').data('daterangepicker').startDate.format('YYYY-MM-DD HH:mm ');
+                var endDate = $('input[name="daterange"]').data('daterangepicker').endDate.format('YYYY-MM-DD HH:mm ');
+                $.ajax({
+                    url: "/filter-by-time",
+                   data: { 'startDate': startDate, 'endDate': endDate },
+                    dataType: "json",
+                }).done(function(result){
+                    console.log(result)       
+                    var lista = [];
+                    var parameters = {};
+                    
+                    function groupBy(objectArray, property) {
+                        return objectArray.reduce(function (acc, obj) {
+                            var key = obj[property];
+                            if (!acc[key]) {
+                            acc[key] = [];
+                            }
+                            acc[key].push(obj);
+                            return acc;
+                        }, {});
+                     }
+                        
+                var filteredData = groupBy(result,'parameterName');
+                console.log('-filtered-data')
+                console.log(filteredData)
+                for (const key in filteredData) {
+                        console.log(key)
+                        
+                        var chartElement = '<div class="box">';
+                            chartElement += '<canvas id="' +key+ '" height="450" width="800"></canvas>';
+                            chartElement += '</div>';
+                        
+                        if ($('canvas#'+key+'').length === 0) {
+                            $('.chart-container').append(chartElement);
+                        }
+
+                        if (filteredData.hasOwnProperty(key)) {
+                            const element = filteredData[key];
+                            
+                        for(const child in element){
+                                console.log(element[child]['parameterDate'])
+                                label = [];
+                                values = [];
+                            for (var i=0;i<element.length;i++)
+                            {
+                                label.push([element[i]['parameterDate']]);
+                                value =[element[i]['parameterValue']];
+                                if(value=="True")
+                                    value = 1;
+                                else if(value=="False")
+                                    value = 0;
+                                values.push(value);
+                            }
+                            var tempData = {
+                            labels: label,
+                            datasets: [{
+                                fillColor: "rgba(255,187,205,0.2)",
+                                label: key,
+                                strokeColor: "rgba(151,187,205,1)",
+                                pointColor: "rgba(151,187,205,1)",
+                                pointStrokeColor: "#fff",
+                                pointHighlightFill: "#fff",
+                                pointHighlightStroke: "rgba(151,187,205,1)",
+                                data: values
+                            }]
+                        };
+                        
+
+                        // Get the context of the canvas element we want to select
+                            var ctx = document.getElementById(''+key+'').getContext("2d");
+                            var options = {};
+
+                            var myLineChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: tempData,
+                                options: options
+                            });
+
+                        }                                                    
+                    }
+                }
+                                                         
+                });
+               
+            }
+
+            dynamicCharts()
+
+               $('input[name="daterange"]').on('change', function (ev, picker) {
+                
+                 dynamicCharts()
+            });
+
+
+        });
+           
+
+
+
+
+
+    </script>
+
+{% endblock %}

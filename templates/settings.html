@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>The select Element</h2>
+<p>Priorities:</p>
+
+<form action="{% url 'settings' %}" method="POST">
+    {% csrf_token %}
+    {% for list in parameters %}
+        <select name="{{ list.0.priority }}">
+            {% for parameter in list %}
+                <option value="{{ parameter.name }}">{{ parameter.name }}</option>
+            {% endfor %}
+        </select>
+
+    {% endfor %}
+    <br><br>
+    <input type="submit">
+</form>
+
+</body>
+</html>

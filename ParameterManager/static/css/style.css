@@ -1,0 +1,5 @@
+.message-box {
+    position: absolute;
+    margin: 100px;
+    display: none;
+}

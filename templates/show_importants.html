@@ -1,0 +1,425 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+
+            <section class="content-header">
+                <h1>
+                    important parameters
+                </h1>
+
+            </section>
+
+            <section class="content">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="box">
+                            <div class="box-header">
+                                <h3 class="box-title">input</h3>
+                            </div>
+                            <!-- /.box-header -->
+                            <div class="box-body no-padding">
+                                <table class="table table-striped" id="tblimportants">
+                                    <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>variable</th>
+                                        <th>value</th>
+                                        <th>last updated</th>
+                                        <th>view</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for parameter in parameters %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ parameter.0.name }}</td>
+                                            <td>{{ parameter.2 }}</td>
+                                            <td>{{ parameter.1 }}</td>
+                                            <td>
+                                                <button id="{{ parameter.0.pk }}" name="show-history" type="button"
+                                                        class="btn btn-primary">
+
+                                                    {% csrf_token %}
+                                                    show history
+                                                </button>
+
+                                                <button id="{{ parameter.0.pk }}" name="make-graph" type="button"
+                                                        class="btn btn-primary">
+
+                                                    {% csrf_token %}
+                                                    make graph
+                                                </button>
+
+                                                <button id="{{ parameter.0.pk }}" name="settings" type="button"
+                                                        class="btn btn-primary">
+                                                    {% csrf_token %}
+                                                    settings
+                                                </button>
+
+                                                <button id="{{ parameter.0.pk }}" name="delete-important" type="button"
+                                                        class="btn btn-primary">
+
+                                                    {% csrf_token %}
+                                                    delete
+                                                </button>
+
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+
+    <!-- modal -->
+    <div class="modal fade" id="examplemodallong" tabindex="-1" role="dialog" aria-labelledby="examplemodallongtitle"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="examplemodallongtitle">modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="modal-body" class="modal-body">
+                    <table id="history-table" class="table table-hover" style="cursor:pointer;">
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">close</button>
+                    <button type="button" class="btn btn-primary">save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- settings modal -->
+    <div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="settings-modal-title"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settings-modal-title">modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form class="form-horizontal" id="set-optimals" method="post" enctype="multipart/form-data">
+                    <div id="modal-body" class="modal-body">
+                        <div class="row" id="settings-fields">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">close</button>
+                        <button type="submit" class="btn btn-primary">submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{#    <script src="https://cdn.datatables.net/1.10.19/js/jquery.datatables.min.js"></script>#}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8"
+            src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+
+    <script>
+        function fetchdata() {
+            $.ajax({
+                url: '/show-importants',
+                type: 'get',
+                processData: false,
+                contentType: false,
+                dataType: "json",
+                success: function (data) {
+                    // perform operation on return value
+
+                    $.each(data, function (k, v) {
+                        $('#' + k + 'date').text(v[0]);
+                        $('#' + k + 'd').text("- " + v[1]);
+                    });
+
+                },
+                complete: function (data) {
+                    setTimeout(fetchdata, 5000);
+                }
+            });
+        }
+
+        function getcookie(name) {
+            var cookievalue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookievalue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookievalue;
+        }
+
+        var csrftoken = getcookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these http methods do not require csrf protection
+            return (/^(get|head|options|trace)$/.test(method));
+        }
+
+
+        $(document).ready(function () {
+
+            setTimeout(fetchdata, 5000);
+            var table = $('#tblimportants').DataTable();
+
+            $("button[name='show-history']").click(function (event) {
+                console.log('i hini');
+                var form_data = new FormData();
+                form_data.append('parameter', this.id);
+
+                $.ajax({
+                    url: 'get-history',
+                    type: 'post',
+                    data: form_data,
+                    processData: false,
+                    contentType: false,
+                    dataType: "json",
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("x-csrftoken", csrftoken);
+                        }
+                    },
+
+                    success: function (data) {
+                        // perform operation on return value
+                        var table = $('#history-table');
+                        table.empty();
+                        $.each(data, function (k, v) {
+                            v.forEach(element => {
+                                row = $('<tr><td>' + element[0] + '</td><td>' + element[1] + '</td></tr>');
+                                table.append(row);
+                                $('#examplemodallong').modal('show');
+                            });
+
+
+                        });
+
+
+                    }
+                })
+            });
+            $("button[name='delete-important']").click(function (event) {
+                console.log('dhezi');
+                var form_data = new FormData();
+                form_data.append('parameter', this.id);
+
+                $.ajax({
+                    url: 'delete-important',
+                    type: 'post',
+                    data: form_data,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("x-csrftoken", csrftoken);
+                        }
+                    },
+                    success: function (data) {
+                        // perform operation on return value
+                        window.location.href = "/show-importants";
+
+                    }
+                })
+            });
+
+            $("button[name='settings']").click(function (event) {
+
+                var form_data = new FormData();
+                form_data.append('parameter', this.id);
+
+                $.ajax({
+                    url: 'set-optimal-values',
+                    type: 'post',
+                    data: form_data,
+                    processData: false,
+                    contentType: false,
+                    dataType: "json",
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("x-csrftoken", csrftoken);
+                        }
+                    },
+                    success: function (data) {
+                        // perform operation on return value
+                        var div = $('#settings-fields');
+                        div.empty();
+                        $.each(data, function (k, v) {
+                            console.log(k, v);
+
+                            v.forEach(element => {
+                                if (element == 'radio') {
+                                    div.append(
+                                        $('<div/>')
+                                            .addClass("row")
+                                            .append($('<div/>')
+                                                .addClass('col-lg-offset-1 col-lg-10 col-md-12 col-sm-12 col-xs-12')
+                                                .append($("<input/>")
+                                                    .attr('id', 'settings-true')
+                                                    .attr('type', 'radio')
+                                                    .attr('name', 'bool')
+                                                    .attr('value', 'true')
+                                                )
+                                                .append($("<label/>")
+                                                    .attr('for', 'settings-true')
+                                                    .text(' true')
+                                                )
+                                            )
+                                    );
+
+                                    div.append(
+                                        $('<div/>')
+                                            .addClass("row")
+                                            .append($('<div/>')
+                                                .addClass('col-lg-offset-1 col-lg-10 col-md-12 col-sm-12 col-xs-12')
+                                                .append($("<input/>")
+                                                    .attr('id', 'settings-false')
+                                                    .attr('type', 'radio')
+                                                    .attr('name', 'bool')
+                                                    .attr('value', 'false')
+                                                )
+                                                .append($("<label/>")
+                                                    .attr('for', 'settings-false')
+                                                    .text(' false')
+                                                )
+                                            )
+                                    );
+                                } else if (element == 'number') {
+
+                                    div.append(
+                                        $('<div/>')
+                                            .addClass("row")
+                                            .append($('<div/>')
+                                                .addClass('col-lg-offset-1 col-lg-10 col-md-12 col-sm-12 col-xs-12')
+                                                .append($("<label/>")
+                                                    .attr('for', 'settings-lowest')
+                                                    .text(' lowest')
+                                                )
+                                                .append($("<input/>")
+                                                    .attr('id', 'settings-lowest')
+                                                    .attr('type', 'number')
+                                                    .attr('name', 'lowest')
+                                                    .attr('value', 'lowest')
+                                                )
+                                            )
+                                    );
+
+                                    div.append(
+                                        $('<div/>')
+                                            .addClass("row")
+                                            .append($('<div/>')
+                                                .addClass('col-lg-offset-1 col-lg-10 col-md-12 col-sm-12 col-xs-12')
+                                                .append($("<label/>")
+                                                    .attr('for', 'settings-false')
+                                                    .text(' highest')
+                                                )
+                                                .append($("<input/>")
+                                                    .attr('id', 'settings-highest')
+                                                    .attr('type', 'number')
+                                                    .attr('name', 'highest')
+                                                    .attr('value', 'highest')
+                                                )
+                                            )
+                                    );
+                                }
+                                else if (element == 'text') {
+                                    div.append(
+                                        $('<div/>')
+                                            .addClass("row")
+                                            .append($('<div/>')
+                                                .addClass('col-lg-offset-1 col-lg-10 col-md-12 col-sm-12 col-xs-12')
+                                                .append($("<label/>")
+                                                    .attr('for', 'settings-str')
+                                                    .text(' str')
+                                                )
+                                                .append($("<input/>")
+                                                    .attr('id', 'settings-str')
+                                                    .attr('type', 'text')
+                                                    .attr('name', 'str')
+                                                )
+                                            )
+                                    );
+                                }
+                                $('#settings-modal').modal('show');
+                            });
+                        });
+
+
+                    }
+                })
+            });
+            $('#set-optimals').on('submit', function (event) {
+                event.preventDefaultt();
+                var form = $('#set-optimals').serializearray();
+                console.log(form);
+                $.ajax({
+                    type: 'post',
+                    url: '/update-optimal-values',
+                    data: form,
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("x-csrftoken", csrftoken);
+                        }
+                    },
+                    success: function (data) {
+                        window.location.href = '/show-importants';
+
+                    },
+                });
+            });
+
+
+            $("button[name='make-graph']").click(function (event) {
+                var form_data = new FormData();
+                form_data.append('parameter', this.id);
+                $.ajax({
+                    type: "post",
+                    url: "make-graph",
+                    data: form_data,
+                    processData: false,
+                    contentType: false,
+                    dataType: "json",
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("x-csrftoken", csrftoken);
+                        }
+                    },
+                    success: function (response) {
+                        console.log('true')
+                    },
+                    error: function (response) {
+                        console.log(response.responseText)
+                    }
+                });
+            });
+        });
+
+    </script>
+{% endblock %}
+
+

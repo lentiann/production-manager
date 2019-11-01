@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container-fluid" style="padding-top: 100px">
+    <div class="row">
+        <div class="col-sm-12 col-md-7">
+            <div class="panel panel-default">
+                <form class="form-horizontal" action="#" method="post" enctype="multipart/form-data">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom: 20px;, margin-left: 100px;">
+                            <h2 style="display: inline-block; margin-left: 58px;">Choose a parameter</h2>
+                            <h4 style="display: inline-block; margin-left: 50px;">
+                                <select name="parameter">
+                                    {% for parameter in parameters %}
+                                        <option value="{{ parameter.name }}">{{ parameter.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </h4>
+                        </div>
+                        {% if not_completed %}
+                            <div class="alert alert-danger">
+                                <strong>You are required to complete all the fields</strong>
+                            </div>
+                        {% endif %}
+
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <span class="text-danger small">{{ field.error }}</span>
+                                </div>
+                                <label class="control-label col-sm-3">{{ field.label_tag }}</label>
+                                <div class="col-sm-9">{{ field }}</div>
+                            </div>
+                        {% endfor %}
+
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

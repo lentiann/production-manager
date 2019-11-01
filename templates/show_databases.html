@@ -1,0 +1,291 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+    <br>
+    <div class="container col-lg-12 col-md-12 col-sm-12, col-xs-12">
+        <div class="row">
+            <div class="col-lg-10 col-md-10 col-sm-12, col-xs-12">
+                <form method="POST" id="plc-authenticate">
+                    {% csrf_token %}
+                    <label for="uname"><b>Database name</b></label>
+                    <input type="text" placeholder="Enter database name" name="db-name" required>
+                    <label for="uname"><b>PLC Url</b></label>
+                    <input type="text" placeholder="Plc url" name="url" style="width: 30%" value="opc.tcp://192.168.160.215:4840" required>
+                    <label for="uname"><b>Username</b></label>
+                    <input type="text" placeholder="Enter Username" name="uname" value="ardit">
+                    <label for="psw"><b>Password</b></label>
+                    <input type="password" placeholder="Enter Password" name="psw" value="Bosi!123">
+                    <button type="submit">Add a database</button>
+                </form>
+            </div>
+
+        </div>
+        <br>
+
+        <ul class="nav nav-tabs" id="nav-tabs">
+            {% for db in dbs %}
+                {% if db.2 %}
+                    <li class='active'><a data-toggle='tab' href='#db{{ db.1 }}'>{{ db.0 }}</a></li>
+                {% else %}
+                    <li><a data-toggle='tab' href='#db{{ db.1 }}'>{{ db.0 }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+
+        <div class="tab-content" id="tab-content">
+            {% for db in dbs %}
+                {% if db.2 %}
+                    <div id='db{{ db.1 }}' class='tab-pane fade in active'>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+
+                                    <div class="box">
+
+                                        <!-- /.box-header -->
+                                        <div class="box-body">
+                                            <div id="tree{{ db.1 }}">
+
+                                            </div>
+                                            <div class="row" style="margin-top: 10px; margin-left: 10px">
+                                                <form method="POST" class="forma" id="{{ db.1 }}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-md"
+                                                            style="float: left; margin-right: 5px;">
+                                                        Submit
+                                                    </button>
+                                                </form>
+                                                <form method="POST" class="refresh-db" id="{{ db.1 }}-">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-primary btn-md"
+                                                            style="float: left; margin-right: 5px;">
+                                                        Refresh DB
+                                                    </button>
+                                                </form>
+                                            </div>
+
+
+                                        </div>
+                                        <!-- /.box-body -->
+                                    </div>
+                                    <!-- /.box -->
+                                </div>
+
+
+                                <!-- /.col -->
+                            </div>
+                            <!-- /.row -->
+
+                        </section>
+                    </div>
+                {% else %}
+                    <div id='db{{ db.1 }}' class='tab-pane fade in'>
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+
+                                    <div class="box">
+
+                                        <!-- /.box-header -->
+                                        <div class="box-body">
+                                            <div id="tree{{ db.1 }}">
+
+                                            </div>
+                                            <div class="row" style="margin-top: 10px; margin-left: 10px">
+                                                <form method="POST" class="forma" id="{{ db.1 }}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-md"
+                                                            style="float: left; margin-right: 5px;">
+                                                        Submit
+                                                    </button>
+                                                </form>
+                                                <form method="POST" class="refresh-db" id="{{ db.1 }}-">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-primary btn-md"
+                                                            style="float: left; margin-right: 5px;">
+                                                        Refresh DB
+                                                    </button>
+                                                </form>
+                                            </div>
+
+
+                                        </div>
+                                        <!-- /.box-body -->
+                                    </div>
+                                    <!-- /.box -->
+                                </div>
+
+
+                                <!-- /.col -->
+                            </div>
+                            <!-- /.row -->
+
+                        </section>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    <script>
+
+        $(function () {
+            let db_num =
+            {{ db_num }}
+            for (let i = 1; i < db_num + 1; i++) {
+                $('#tree' + i).jstree({
+                    "checkbox": {tie_selection: false},
+                    "plugins": ["checkbox"],
+                    'core': {
+                        'data': {
+                            "url": "/get-database",
+                            "data": function (node) {
+
+                                return {"id": node.id, "state": {"selected": true}};
+                            }
+                            ,
+                        },
+
+                    }
+                });
+                var r = [];
+
+                $('#tree' + i).on('check_node.jstree', function (e, data) {
+                    var i, j;
+                    for (i = 0, j = data.selected.length; i < j; i++) {
+                        r.push(data.instance.get_node(data.selected[i]).id);
+                    }
+                    console.log(r);
+
+                });
+
+            }
+
+
+            function getCookie(name) {
+                var cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = jQuery.trim(cookies[i]);
+                        // Does this cookie string begin with the name we want?
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            var csrftoken = getCookie('csrftoken');
+
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
+
+
+            $('.forma').on('submit', function (event) {
+                event.preventDefault();
+                let db_id = this.id;
+                r.push(db_id);
+                $.ajax({
+                    type: "POST",
+                    url: "/set-checks",
+                    data: {'varg': r},
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    },
+                    success: function (response) {
+                        window.location.href = '/show-importants';
+                    },
+                    error: function (response) {
+                    }
+                });
+            });
+
+            $('.refresh-db').on('submit', function (event) {
+                event.preventDefault();
+                var id_list = [];
+                let db_id = this.id;
+                id_list.push(db_id);
+                $.ajax({
+                    type: "POST",
+                    url: "/refresh-db",
+                    data: {'id': id_list},
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    },
+                    success: function (data) {
+                        console.log('success');
+                        $.each(data, function (key, value) {
+                            $.each(value, function (k, v) {
+                                console.log(k, ' -  ', v);
+                                let msg_container = $('#message-container');
+                                msg_container.append(
+                                    $('<div/>')
+                                        .addClass("alert alert-dismissible message-box1")
+                                        .attr('id', 'message-box1')
+                                        .attr("role", "alert")
+                                        .append($("<button/>")
+                                            .attr('type', 'button')
+                                            .addClass('close')
+                                            .attr('aria-label', 'Close')
+                                            .attr('onclick', '$("#message-box1").remove()')
+                                            .append($('<span/>')
+                                                .attr('aria-hidden', 'true')
+                                                .text("×")
+                                            )
+                                        )
+                                        .append($("<div/>")
+                                            .attr('id', 'warning1')
+                                            .text(v)
+                                        )
+
+                                );
+                                console.log('Hello humndas!');
+                            })
+
+                        });
+
+
+                        window.location.href = '/show-database';
+
+                    },
+
+                });
+            });
+
+            $('#plc-authenticate').on('submit', function (event) {
+                event.preventDefault();
+                var form = $('#plc-authenticate').serializeArray();
+                console.log(form);
+                $.ajax({
+                    type: 'POST',
+                    url: '/add-database',
+                    data: form,
+                    beforeSend: function (xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    },
+                    success: function (data) {
+                        window.location.href = '/show-database';
+
+                    },
+                });
+            });
+
+        });
+    </script>
+{% endblock %}
