@@ -114,3 +114,4 @@ config/
 
 .idea/
 .vs/
+*.* linguist-language=Python
